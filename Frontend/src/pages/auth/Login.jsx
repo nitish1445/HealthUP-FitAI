@@ -27,6 +27,7 @@ export default function Login() {
     try {
       const res = await login(form.email, form.password);
       const authData = res.data.data;
+      console.log(authData);
 
       showToast(res.data.message || "Welcome back!");
 

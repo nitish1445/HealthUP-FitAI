@@ -25,20 +25,34 @@ export const login = asyncHandler(async (req, res) => {
   const { email, password } = req.validatedBody;
 
   const user = await User.findOne({ email }).select("+password");
+
   if (!user || !(await user.comparePassword(password))) {
     throw new AppError("Invalid email or password", 401);
   }
 
   user.lastLoginAt = new Date();
-  await user.save({ validateBeforeSave: false });
+
+  await user.save({
+    validateBeforeSave: false,
+  });
 
   const token = signToken(user._id);
-  const profile = await FitnessProfile.findOne({ user: user._id });
+
+  const profileCompleted = user.role === "admin" ? true : user.profileCompleted;
+
+  const userData = user.toSafeObject();
 
   res.status(200).json({
     success: true,
     message: `Logged in as ${user.name}`,
-    data: { user, token, hasProfile: !!profile },
+    data: {
+      user: {
+        ...userData,
+        profileCompleted,
+      },
+      token,
+      hasProfile: profileCompleted,
+    },
   });
 });
 
