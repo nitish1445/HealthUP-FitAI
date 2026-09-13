@@ -11,7 +11,7 @@ import {
   HeartPulse,
   Target,
 } from "lucide-react";
-import * as profileService from "../../services/profileService";
+import api from "../../config/Api";
 import { useAuth } from "../../context/AuthContext";
 import { useToast } from "../../context/ToastContext";
 import Logomark from "../../components/common/Logomark";
@@ -19,8 +19,8 @@ import Logomark from "../../components/common/Logomark";
 const GOALS = [
   {
     value: "Weight Loss",
-    label: "Weight Gain",
-    description: "Improve body weight and improve overall fitness.",
+    label: "Weight Loss",
+    description: "Reduce body fat while improving overall fitness.",
   },
   {
     value: "Muscle Gain",
@@ -52,13 +52,21 @@ const ACTIVITY_LEVELS = [
     label: "Sedentary",
     description: "Little to no exercise",
   },
-  { value: "light", label: "Light", description: "Exercise 1-3 days/week" },
+  {
+    value: "light",
+    label: "Light",
+    description: "Exercise 1-3 days/week",
+  },
   {
     value: "moderate",
     label: "Moderate",
     description: "Exercise 3-5 days/week",
   },
-  { value: "active", label: "Active", description: "Exercise 6-7 days/week" },
+  {
+    value: "active",
+    label: "Active",
+    description: "Exercise 6-7 days/week",
+  },
   {
     value: "very_active",
     label: "Very active",
@@ -106,17 +114,30 @@ export default function Onboarding() {
   });
 
   const update = (field, value) => {
-    setForm((current) => ({ ...current, [field]: value }));
+    setForm((current) => ({
+      ...current,
+      [field]: value,
+    }));
   };
 
   const validateStep = () => {
-    if (step === 0) return form.age && form.biologicalSex;
-    if (step === 1) {
-      return form.heightCm && form.currentWeightKg && form.targetWeightKg;
+    if (step === 0) {
+      return form.age && form.biologicalSex;
     }
+
+    if (step === 1) {
+      return (
+        form.heightCm &&
+        form.currentWeightKg &&
+        form.targetWeightKg
+      );
+    }
+
     if (step === 2) {
       return (
-        form.activityLevel && form.experienceLevel && form.workoutDaysPerWeek
+        form.activityLevel &&
+        form.experienceLevel &&
+        form.workoutDaysPerWeek
       );
     }
 
@@ -130,7 +151,9 @@ export default function Onboarding() {
     }
 
     setError("");
-    setStep((current) => Math.min(current + 1, STEPS.length - 1));
+    setStep((current) =>
+      Math.min(current + 1, STEPS.length - 1),
+    );
   };
 
   const back = () => {
@@ -148,7 +171,7 @@ export default function Onboarding() {
     setLoading(true);
 
     try {
-      await profileService.createProfile({
+      const payload = {
         age: Number(form.age),
         biologicalSex: form.biologicalSex,
         heightCm: Number(form.heightCm),
@@ -158,16 +181,34 @@ export default function Onboarding() {
         experienceLevel: form.experienceLevel,
         primaryGoal: form.primaryGoal,
         workoutDaysPerWeek: Number(form.workoutDaysPerWeek),
-      });
+      };
+
+      const res = await api.post(
+        "/profile/complete-profile",
+        payload,
+      );
+
+      if (!res.data?.success) {
+        throw new Error(
+          res.data?.message || "Unable to save your profile.",
+        );
+      }
 
       setHasProfile(true);
+
       showToast("Your personalized plan is ready!");
-      navigate("/dashboard");
+
+      navigate("/dashboard", {
+        replace: true,
+      });
     } catch (err) {
-      setError(
+      const message =
         err.response?.data?.message ||
-          "Unable to save your profile. Please try again.",
-      );
+        err.message ||
+        "Unable to save your profile. Please try again.";
+
+      setError(message);
+      showToast(message, "error");
     } finally {
       setLoading(false);
     }
@@ -177,33 +218,33 @@ export default function Onboarding() {
     "h-11 w-full rounded-xl border border-border bg-background px-4 text-sm text-text outline-none transition-all placeholder:text-muted focus:border-primary focus:ring-2 focus:ring-primary/15";
 
   const selectClass =
-    "cursor-pointer h-11 w-full appearance-none rounded-xl border border-border bg-background px-4 pr-10 text-sm text-text outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/15";
+    "h-11 w-full cursor-pointer appearance-none rounded-xl border border-border bg-background px-4 pr-10 text-sm text-text outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/15";
 
   return (
     <div className="min-h-screen bg-background px-4 py-6 text-text sm:px-6 sm:py-8">
       <div className="mx-auto w-full max-w-2xl">
-        {/* Header */}
         <div className="mb-6 flex items-center justify-center gap-2">
           <Logomark />
+
           <div>
             <span className="font-display text-lg font-semibold tracking-[-0.02em] text-text">
               HealthUP
             </span>
+
             <p className="text-[8px] font-semibold uppercase tracking-[0.14em] text-primary-dark">
               Fitness Intelligence
             </p>
           </div>
         </div>
 
-        {/* Main Card */}
         <div className="rounded-3xl bg-surface p-5 shadow-[0_12px_40px_rgba(23,32,27,0.07)] sm:p-7">
-          {/* Progress */}
           <div className="mb-7">
             <div className="mb-3 flex items-center justify-between">
               <div>
                 <p className="text-xs font-semibold uppercase tracking-[0.14em] text-secondary-dark">
                   Your profile
                 </p>
+
                 <p className="mt-1 font-display text-lg font-semibold text-text">
                   {STEPS[step]}
                 </p>
@@ -232,19 +273,22 @@ export default function Onboarding() {
             </div>
           )}
 
-          {/* Step 1 */}
           {step === 0 && (
             <div>
               <div className="mb-5">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-light">
-                    <HeartPulse size={19} className="text-primary-dark" />
+                    <HeartPulse
+                      size={19}
+                      className="text-primary-dark"
+                    />
                   </div>
 
                   <div>
                     <h2 className="font-display text-xl font-semibold text-text">
                       Tell us about you
                     </h2>
+
                     <p className="mt-0.5 text-xs text-muted">
                       This helps us personalize your experience.
                     </p>
@@ -267,7 +311,9 @@ export default function Onboarding() {
                     min={13}
                     max={100}
                     value={form.age}
-                    onChange={(e) => update("age", e.target.value)}
+                    onChange={(e) =>
+                      update("age", e.target.value)
+                    }
                     placeholder="Enter your age"
                     className={inputClass}
                   />
@@ -286,16 +332,25 @@ export default function Onboarding() {
                       <button
                         key={option.value}
                         type="button"
-                        onClick={() => update("biologicalSex", option.value)}
-                        className={`cursor-pointer flex h-12 items-center justify-center rounded-xl border text-sm font-medium transition-all ${
+                        onClick={() =>
+                          update(
+                            "biologicalSex",
+                            option.value,
+                          )
+                        }
+                        className={`flex h-12 cursor-pointer items-center justify-center rounded-xl border text-sm font-medium transition-all ${
                           form.biologicalSex === option.value
                             ? "border-primary bg-primary-light text-primary-dark"
                             : "border-border bg-background text-text-secondary hover:bg-surface-soft"
                         }`}
                       >
                         {form.biologicalSex === option.value && (
-                          <Check size={16} className="mr-2" />
+                          <Check
+                            size={16}
+                            className="mr-2"
+                          />
                         )}
+
                         {option.label}
                       </button>
                     ))}
@@ -305,19 +360,22 @@ export default function Onboarding() {
             </div>
           )}
 
-          {/* Step 2 */}
           {step === 1 && (
             <div>
               <div className="mb-5">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-secondary-light">
-                    <Activity size={19} className="text-secondary-dark" />
+                    <Activity
+                      size={19}
+                      className="text-secondary-dark"
+                    />
                   </div>
 
                   <div>
                     <h2 className="font-display text-xl font-semibold text-text">
                       Your body
                     </h2>
+
                     <p className="mt-0.5 text-xs text-muted">
                       Tell us where you're starting from.
                     </p>
@@ -341,10 +399,16 @@ export default function Onboarding() {
                       min={50}
                       max={250}
                       value={form.heightCm}
-                      onChange={(e) => update("heightCm", e.target.value)}
+                      onChange={(e) =>
+                        update(
+                          "heightCm",
+                          e.target.value,
+                        )
+                      }
                       placeholder="170"
                       className={`${inputClass} pr-12`}
                     />
+
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-muted">
                       cm
                     </span>
@@ -367,11 +431,15 @@ export default function Onboarding() {
                       max={400}
                       value={form.currentWeightKg}
                       onChange={(e) =>
-                        update("currentWeightKg", e.target.value)
+                        update(
+                          "currentWeightKg",
+                          e.target.value,
+                        )
                       }
                       placeholder="70"
                       className={`${inputClass} pr-12`}
                     />
+
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-muted">
                       kg
                     </span>
@@ -393,10 +461,16 @@ export default function Onboarding() {
                       min={20}
                       max={400}
                       value={form.targetWeightKg}
-                      onChange={(e) => update("targetWeightKg", e.target.value)}
+                      onChange={(e) =>
+                        update(
+                          "targetWeightKg",
+                          e.target.value,
+                        )
+                      }
                       placeholder="65"
                       className={`${inputClass} pr-12`}
                     />
+
                     <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-medium text-muted">
                       kg
                     </span>
@@ -406,19 +480,22 @@ export default function Onboarding() {
             </div>
           )}
 
-          {/* Step 3 */}
           {step === 2 && (
             <div>
               <div className="mb-5">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-success-light">
-                    <Dumbbell size={19} className="text-success-dark" />
+                    <Dumbbell
+                      size={19}
+                      className="text-success-dark"
+                    />
                   </div>
 
                   <div>
                     <h2 className="font-display text-xl font-semibold text-text">
                       Your activity
                     </h2>
+
                     <p className="mt-0.5 text-xs text-muted">
                       Help us understand your current routine.
                     </p>
@@ -437,8 +514,13 @@ export default function Onboarding() {
                       <button
                         key={option.value}
                         type="button"
-                        onClick={() => update("activityLevel", option.value)}
-                        className={`cursor-pointer flex items-center justify-between rounded-xl border px-4 py-3 text-left transition-all ${
+                        onClick={() =>
+                          update(
+                            "activityLevel",
+                            option.value,
+                          )
+                        }
+                        className={`flex cursor-pointer items-center justify-between rounded-xl border px-4 py-3 text-left transition-all ${
                           form.activityLevel === option.value
                             ? "border-secondary bg-secondary-light"
                             : "border-border bg-background hover:bg-surface-soft"
@@ -448,12 +530,14 @@ export default function Onboarding() {
                           <p className="text-sm font-semibold text-text">
                             {option.label}
                           </p>
+
                           <p className="mt-0.5 text-xs text-muted">
                             {option.description}
                           </p>
                         </div>
 
-                        {form.activityLevel === option.value && (
+                        {form.activityLevel ===
+                          option.value && (
                           <CircleCheckBig
                             size={17}
                             className="shrink-0 text-secondary-dark"
@@ -469,23 +553,36 @@ export default function Onboarding() {
                     Experience level
                   </label>
 
-                  <div className="grid grid-cols-3 gap-2">
+                  <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
                     {EXPERIENCE_LEVELS.map((option) => (
                       <button
                         key={option.value}
                         type="button"
-                        onClick={() => update("experienceLevel", option.value)}
-                        className={`cursor-pointer flex items-center justify-between rounded-xl border px-4 py-3 text-left transition-all ${
-                          form.experienceLevel === option.value
+                        onClick={() =>
+                          update(
+                            "experienceLevel",
+                            option.value,
+                          )
+                        }
+                        className={`flex cursor-pointer items-center justify-between rounded-xl border px-4 py-3 text-left transition-all ${
+                          form.experienceLevel ===
+                          option.value
                             ? "border-success bg-success-light"
                             : "border-border bg-background hover:bg-surface-soft"
                         }`}
                       >
-                        <p className="text-sm font-semibold text-text">
-                          {option.label}
-                        </p>
+                        <div>
+                          <p className="text-sm font-semibold text-text">
+                            {option.label}
+                          </p>
 
-                        {form.experienceLevel === option.value && (
+                          <p className="mt-0.5 text-xs text-muted sm:hidden">
+                            {option.description}
+                          </p>
+                        </div>
+
+                        {form.experienceLevel ===
+                          option.value && (
                           <CircleCheckBig
                             size={15}
                             className="text-success-dark"
@@ -509,15 +606,27 @@ export default function Onboarding() {
                       id="workoutDays"
                       value={form.workoutDaysPerWeek}
                       onChange={(e) =>
-                        update("workoutDaysPerWeek", e.target.value)
+                        update(
+                          "workoutDaysPerWeek",
+                          e.target.value,
+                        )
                       }
                       className={selectClass}
                     >
-                      {[1, 2, 3, 4, 5, 6, 7].map((days) => (
-                        <option key={days} value={days}>
-                          {days} {days === 1 ? "day" : "days"} per week
-                        </option>
-                      ))}
+                      {[1, 2, 3, 4, 5, 6, 7].map(
+                        (days) => (
+                          <option
+                            key={days}
+                            value={days}
+                          >
+                            {days}{" "}
+                            {days === 1
+                              ? "day"
+                              : "days"}{" "}
+                            per week
+                          </option>
+                        ),
+                      )}
                     </select>
 
                     <ChevronRight
@@ -530,21 +639,25 @@ export default function Onboarding() {
             </div>
           )}
 
-          {/* Step 4 */}
           {step === 3 && (
             <div>
               <div className="mb-5">
                 <div className="flex items-center gap-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-light">
-                    <Target size={19} className="text-primary-dark" />
+                    <Target
+                      size={19}
+                      className="text-primary-dark"
+                    />
                   </div>
 
                   <div>
                     <h2 className="font-display text-xl font-semibold text-text">
                       What's your main goal?
                     </h2>
+
                     <p className="mt-0.5 text-xs text-muted">
-                      We'll use this to shape your personalized plan.
+                      We'll use this to shape your personalized
+                      plan.
                     </p>
                   </div>
                 </div>
@@ -555,8 +668,10 @@ export default function Onboarding() {
                   <button
                     key={goal.value}
                     type="button"
-                    onClick={() => update("primaryGoal", goal.value)}
-                    className={`cursor-pointer flex items-center justify-between rounded-xl border px-4 py-3.5 text-left transition-all ${
+                    onClick={() =>
+                      update("primaryGoal", goal.value)
+                    }
+                    className={`flex cursor-pointer items-center justify-between rounded-xl border px-4 py-3.5 text-left transition-all ${
                       form.primaryGoal === goal.value
                         ? "border-primary bg-primary-light"
                         : "border-border bg-background hover:bg-surface-soft"
@@ -566,6 +681,7 @@ export default function Onboarding() {
                       <p className="text-sm font-semibold text-text">
                         {goal.label}
                       </p>
+
                       <p className="mt-0.5 text-xs leading-5 text-muted">
                         {goal.description}
                       </p>
@@ -587,19 +703,19 @@ export default function Onboarding() {
               </div>
 
               <p className="mt-4 text-xs leading-5 text-muted">
-                Your goal helps HealthUP calculate your calorie target and
-                generate your initial workout and diet plan.
+                Your goal helps HealthUP calculate your calorie
+                target and generate your initial workout and diet
+                plan.
               </p>
             </div>
           )}
 
-          {/* Navigation */}
           <div className="mt-7 flex items-center justify-between border-t border-border pt-5">
             <button
               type="button"
               onClick={back}
               disabled={step === 0}
-              className={`cursor-pointer inline-flex h-11 items-center justify-center gap-1.5 rounded-xl px-4 text-sm font-medium text-text-secondary transition-colors hover:bg-surface-soft hover:text-text ${
+              className={`inline-flex h-11 cursor-pointer items-center justify-center gap-1.5 rounded-xl px-4 text-sm font-medium text-text-secondary transition-colors hover:bg-surface-soft hover:text-text ${
                 step === 0 ? "invisible" : ""
               }`}
             >
@@ -611,9 +727,10 @@ export default function Onboarding() {
               <button
                 type="button"
                 onClick={next}
-                className="cursor-pointer group inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-text transition-all duration-200 hover:bg-primary-dark hover:shadow-[0_6px_18px_rgba(255,157,80,0.2)]"
+                className="group inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-text transition-all duration-200 hover:bg-primary-dark hover:shadow-[0_6px_18px_rgba(255,157,80,0.2)]"
               >
                 Continue
+
                 <ChevronRight
                   size={17}
                   className="transition-transform duration-200 group-hover:translate-x-0.5"
@@ -624,9 +741,12 @@ export default function Onboarding() {
                 type="button"
                 onClick={handleSubmit}
                 disabled={loading}
-                className="cursor-pointer group inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-text transition-all duration-200 hover:bg-primary-dark hover:shadow-[0_6px_18px_rgba(255,157,80,0.2)] disabled:cursor-not-allowed disabled:opacity-60"
+                className="group inline-flex h-11 cursor-pointer items-center justify-center gap-2 rounded-xl bg-primary px-5 text-sm font-semibold text-text transition-all duration-200 hover:bg-primary-dark hover:shadow-[0_6px_18px_rgba(255,157,80,0.2)] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? "Generating..." : "Finish & Generate Plan"}
+                {loading
+                  ? "Generating..."
+                  : "Finish & Generate Plan"}
+
                 {!loading && (
                   <ArrowRight
                     size={17}
@@ -639,7 +759,8 @@ export default function Onboarding() {
         </div>
 
         <p className="mt-5 text-center text-xs text-muted">
-          Your information helps HealthUP create a plan tailored to you.
+          Your information helps HealthUP create a plan tailored
+          to you.
         </p>
       </div>
     </div>

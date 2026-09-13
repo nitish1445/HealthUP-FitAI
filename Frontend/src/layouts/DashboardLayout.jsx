@@ -1,38 +1,40 @@
 import { useState } from "react";
-import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { NavLink, Outlet } from "react-router-dom";
 import {
-  LayoutDashboard,
-  User,
-  Dumbbell,
-  Utensils,
-  TrendingUp,
-  Ruler,
+  Apple,
+  ChartNoAxesColumnIncreasing,
+  ChartNoAxesCombined,
   Flame,
   HeartPulse,
-  BarChart3,
-  Map,
-  MessageCircle,
-  Settings,
+  LayoutDashboard,
   Menu,
+  MessageCircle,
+  Route,
+  Settings,
+  User,
+  Maximize2,
   X,
+  Goal,
   ChevronRight,
 } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import Logomark from "../components/common/Logomark";
-
 const WORKSPACE_ITEMS = [
   { to: "/dashboard", label: "Dashboard", icon: LayoutDashboard, end: true },
-  { to: "/dashboard/workout", label: "Workout", icon: Dumbbell },
-  { to: "/dashboard/diet", label: "Diet", icon: Utensils },
-  { to: "/dashboard/progress", label: "Progress", icon: TrendingUp },
-  { to: "/dashboard/measurements", label: "Measurements", icon: Ruler },
+  { to: "/dashboard/diet", label: "Diet", icon: Apple },
+  { to: "/dashboard/workout", label: "Workout", icon: Goal },
+  { to: "/dashboard/progress", label: "Progress", icon: ChartNoAxesCombined },
   { to: "/dashboard/habits", label: "Habits", icon: Flame },
   { to: "/dashboard/recovery", label: "Recovery", icon: HeartPulse },
-  { to: "/dashboard/analytics", label: "Analytics", icon: BarChart3 },
-  { to: "/dashboard/roadmap", label: "Roadmap", icon: Map },
-  { to: "/dashboard/coach", label: "Coach", icon: MessageCircle },
+  {
+    to: "/dashboard/analytics",
+    label: "Analytics",
+    icon: ChartNoAxesColumnIncreasing,
+  },
+  { to: "/dashboard/roadmap", label: "Roadmap", icon: Route },
+  { to: "/dashboard/measurements", label: "Measurements", icon: Maximize2 },
+  { to: "/dashboard/coach", label: "AI Coach", icon: MessageCircle },
 ];
-
 const ACCOUNT_ITEMS = [
   { to: "/dashboard/profile", label: "Profile", icon: User },
   { to: "/dashboard/settings", label: "Settings", icon: Settings },

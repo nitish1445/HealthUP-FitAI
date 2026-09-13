@@ -123,7 +123,7 @@ export default function AdminLayout() {
           <button
             type="button"
             onClick={handleLogout}
-            className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted transition-colors duration-200 hover:bg-danger-light hover:text-danger"
+            className="cursor-pointer flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-sm font-medium text-muted transition-colors duration-200 hover:bg-danger-light hover:text-danger"
           >
             <LogOut size={18} />
             Log out
